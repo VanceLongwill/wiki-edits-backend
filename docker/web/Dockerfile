@@ -5,13 +5,13 @@ LABEL maintainer="Vance Longwill <vancelongwill@gmail.com>"
 WORKDIR /app
 #
 # Build Args
-ARG LOG_DIR=/app/logs
+# ARG LOG_DIR=/app/logs
 
 # Create Log Directory
-RUN mkdir -p ${LOG_DIR}
+# RUN mkdir -p ${LOG_DIR}
 
 # Environment Variables
-ENV LOG_FILE_LOCATION=${LOG_DIR}/app.log
+# ENV LOG_FILE_LOCATION=${LOG_DIR}/app.log
 
 COPY go.mod go.sum ./
 
@@ -40,7 +40,7 @@ COPY --from=builder /app/main .
 # Expose port 8080 to the outside world
 EXPOSE 8080
 
-VOLUME [${LOG_DIR}]
+# VOLUME [${LOG_DIR}]
 
 # Command to run the executable
 CMD ["./main"] 

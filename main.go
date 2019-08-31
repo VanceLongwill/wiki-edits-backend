@@ -5,9 +5,19 @@ import (
 	"os"
 	"os/signal"
 	"sync"
+
+	"github.com/gin-gonic/gin"
+	"hatnote-historical/db"
+	"hatnote-historical/handlers"
 )
 
 func main() {
+
+	historyDB, err := db.NewDB("hatnotehistory", "hatnotehistory", "hatnotehistory", "db")
+	if err != nil {
+		log.Fatalln("Error initialising db")
+	}
+
 	langCodes := []string{"de", "en"}
 
 	interrupt := make(chan os.Signal, 1)
@@ -40,8 +50,15 @@ func main() {
 					case <-done:
 						return
 					case c := <-results:
+						log.Printf("%s - RCV: %v", lang, c)
 						if c.Action == "edit" {
-							log.Printf("%s - RCV: %v", lang, c)
+							// Store in db
+							sqlStatement := `
+              INSERT INTO edits (lang_code, byte_change)
+              VALUES ($1, $2);`
+							if _, err := historyDB.Exec(sqlStatement, lang, c.ChangeSize); err != nil {
+								log.Printf("Error saving edit: %s", err.Error())
+							}
 						}
 					case err := <-errors:
 						log.Printf("%s - ERR: %s", lang, err.Error())
@@ -53,6 +70,11 @@ func main() {
 			}()
 		}(langCode)
 	}
+
+	app := gin.Default()
+	h := handlers.New(historyDB, logger)
+	app.GET("/edits", h.NetChangePerPeriod)
+  app.Run(":8080")
 
 	wg.Wait()
 }
