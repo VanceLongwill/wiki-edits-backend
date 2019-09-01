@@ -1,14 +1,14 @@
 package main
 
 import (
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
+	"hatnote-historical/db"
+	"hatnote-historical/handlers"
 	"log"
 	"os"
 	"os/signal"
 	"sync"
-
-	"github.com/gin-gonic/gin"
-	"hatnote-historical/db"
-	"hatnote-historical/handlers"
 )
 
 func main() {
@@ -72,9 +72,15 @@ func main() {
 	}
 
 	app := gin.Default()
+	app.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"*"},
+		AllowMethods:     []string{"GET"},
+		AllowHeaders:     []string{"Origin"},
+		AllowCredentials: true,
+	}))
 	h := handlers.New(historyDB, logger)
 	app.GET("/edits", h.NetChangePerPeriod)
-  app.Run(":8080")
+	app.Run(":8080")
 
 	wg.Wait()
 }
